@@ -14,6 +14,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let sessionId = null;
 
+    // Initialize Showdown converter
+    const converter = new showdown.Converter();
+
+    // Set initial greeting message using the appendMessage function
+    appendMessage("Hello! Please upload your PDF documents using the menu on the left and click 'Process' to begin.", 'assistant');
+
+
     // Update file name display on file selection
     pdfFilesInput.addEventListener('change', () => {
         if (pdfFilesInput.files.length > 0) {
@@ -39,17 +46,15 @@ document.addEventListener('DOMContentLoaded', () => {
             formData.append('pdf_docs', file);
         }
 
-        // Start simulated progress
-        showStatus('', 'info'); // Clear previous status
+        showStatus('', 'info');
         progressContainer.style.display = 'block';
         progressBarInner.style.width = '0%';
         progressLabel.textContent = 'Uploading and processing...';
         
-        // Simulate progress animation
         let progress = 0;
         const interval = setInterval(() => {
             progress += Math.random() * 10;
-            if (progress > 95) progress = 95; // Don't complete until fetch is done
+            if (progress > 95) progress = 95;
             progressBarInner.style.width = `${progress}%`;
         }, 500);
 
@@ -59,17 +64,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: formData,
             });
             
-            clearInterval(interval); // Stop simulation
+            clearInterval(interval);
             const data = await response.json();
 
             if (response.ok) {
                 sessionId = data.session_id;
-                // Complete the progress bar
                 progressBarInner.style.width = '100%';
                 progressLabel.textContent = 'Processing Complete!';
                 showStatus('You can now ask questions below.', 'success');
                 enableChat(true);
-                setTimeout(() => { progressContainer.style.display = 'none'; }, 2000); // Hide after 2s
+                setTimeout(() => { progressContainer.style.display = 'none'; }, 2000);
             } else {
                 throw new Error(data.error || 'Failed to process PDFs.');
             }
@@ -86,15 +90,12 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         
         const question = userQuestionInput.value.trim();
-        if (!question || !sessionId) {
-            return;
-        }
+        if (!question || !sessionId) return;
 
         appendMessage(question, 'user');
         userQuestionInput.value = '';
-        enableChat(false); // Disable input during response generation
+        enableChat(false);
 
-        // Show "Thinking..." indicator
         const thinkingIndicator = showThinkingIndicator();
 
         try {
@@ -110,7 +111,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
             
             if (response.ok) {
-                // Replace indicator with the actual message
                 updateThinkingIndicator(thinkingIndicator, data.answer, 'assistant');
             } else {
                 throw new Error(data.error || 'Failed to get a response.');
@@ -118,7 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             updateThinkingIndicator(thinkingIndicator, `Sorry, an error occurred: ${error.message}`, 'assistant error');
         } finally {
-            enableChat(true); // Re-enable input
+            enableChat(true);
             userQuestionInput.focus();
         }
     });
@@ -139,7 +139,13 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const contentDiv = document.createElement('div');
         contentDiv.className = 'message-content';
-        contentDiv.textContent = content;
+        
+        // Use the converter for assistant messages, otherwise set text content for user messages
+        if (role === 'assistant') {
+            contentDiv.innerHTML = converter.makeHtml(content);
+        } else {
+            contentDiv.textContent = content;
+        }
         
         messageDiv.appendChild(contentDiv);
         chatBox.appendChild(messageDiv);
@@ -168,7 +174,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateThinkingIndicator(indicatorElement, newContent, newRole) {
         indicatorElement.className = `message ${newRole}`;
         const contentDiv = indicatorElement.querySelector('.message-content');
-        contentDiv.innerHTML = ''; // Clear the spinner
-        contentDiv.textContent = newContent;
+        
+        // Convert the new content from Markdown to HTML before inserting
+        contentDiv.innerHTML = converter.makeHtml(newContent);
     }
 });

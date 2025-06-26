@@ -8,6 +8,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.jsdelivr.net/npm/showdown@2.1.0/dist/showdown.min.js"></script>
+
 </head>
 <body>
     <div class="app-container">
@@ -39,12 +42,7 @@
                 <p>Powered by Gemini</p>
             </header>
             <div id="chat-box" class="chat-box">
-                <div class="message assistant">
-                    <div class="message-content">
-                        Hello! Please upload your PDF documents using the menu on the left and click 'Process' to begin.
-                    </div>
                 </div>
-            </div>
             <div class="chat-input-area">
                 <form id="chat-form">
                     <input type="text" id="user-question" placeholder="Ask a question about your documents..." disabled>
@@ -52,10 +50,6 @@
                 </form>
             </div>
         </div>
-    </div>
-
-    <div id="spinner" class="spinner-overlay" style="display: none;">
-        <div class="spinner"></div>
     </div>
 
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
