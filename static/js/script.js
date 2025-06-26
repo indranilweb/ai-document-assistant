@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Element References
     const uploadForm = document.getElementById('upload-form');
     const chatForm = document.getElementById('chat-form');
     const pdfFilesInput = document.getElementById('pdf-files');
@@ -6,8 +7,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const userQuestionInput = document.getElementById('user-question');
     const chatBox = document.getElementById('chat-box');
     const statusMessage = document.getElementById('status-message');
-    const spinner = document.getElementById('spinner');
     const sendBtn = document.getElementById('send-btn');
+    const progressContainer = document.getElementById('progress-container');
+    const progressBarInner = document.getElementById('progress-bar-inner');
+    const progressLabel = document.getElementById('progress-label');
 
     let sessionId = null;
 
@@ -21,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Handle PDF processing
+    // Handle PDF processing with simulated progress bar
     uploadForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         
@@ -36,33 +39,49 @@ document.addEventListener('DOMContentLoaded', () => {
             formData.append('pdf_docs', file);
         }
 
-        showSpinner(true);
-        showStatus('Processing documents...', 'info');
+        // Start simulated progress
+        showStatus('', 'info'); // Clear previous status
+        progressContainer.style.display = 'block';
+        progressBarInner.style.width = '0%';
+        progressLabel.textContent = 'Uploading and processing...';
+        
+        // Simulate progress animation
+        let progress = 0;
+        const interval = setInterval(() => {
+            progress += Math.random() * 10;
+            if (progress > 95) progress = 95; // Don't complete until fetch is done
+            progressBarInner.style.width = `${progress}%`;
+        }, 500);
 
         try {
             const response = await fetch('/process_pdfs', {
                 method: 'POST',
                 body: formData,
             });
-
+            
+            clearInterval(interval); // Stop simulation
             const data = await response.json();
 
             if (response.ok) {
                 sessionId = data.session_id;
-                showStatus('Processing complete! You can now ask questions.', 'success');
+                // Complete the progress bar
+                progressBarInner.style.width = '100%';
+                progressLabel.textContent = 'Processing Complete!';
+                showStatus('You can now ask questions below.', 'success');
                 enableChat(true);
+                setTimeout(() => { progressContainer.style.display = 'none'; }, 2000); // Hide after 2s
             } else {
                 throw new Error(data.error || 'Failed to process PDFs.');
             }
         } catch (error) {
+            clearInterval(interval);
+            progressContainer.style.display = 'none';
             showStatus(`Error: ${error.message}`, 'error');
             enableChat(false);
-        } finally {
-            showSpinner(false);
         }
     });
 
-    // Handle sending a chat message
+    // Handle sending a chat message with "Thinking" indicator
     chatForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         
@@ -73,15 +92,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         appendMessage(question, 'user');
         userQuestionInput.value = '';
-        showSpinner(true);
-        sendBtn.disabled = true;
+        enableChat(false); // Disable input during response generation
+
+        // Show "Thinking..." indicator
+        const thinkingIndicator = showThinkingIndicator();
 
         try {
             const response = await fetch('/chat', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     session_id: sessionId,
                     user_question: question,
@@ -91,25 +110,22 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
             
             if (response.ok) {
-                appendMessage(data.answer, 'assistant');
+                // Replace indicator with the actual message
+                updateThinkingIndicator(thinkingIndicator, data.answer, 'assistant');
             } else {
                 throw new Error(data.error || 'Failed to get a response.');
             }
         } catch (error) {
-            appendMessage(`Sorry, an error occurred: ${error.message}`, 'assistant error');
+            updateThinkingIndicator(thinkingIndicator, `Sorry, an error occurred: ${error.message}`, 'assistant error');
         } finally {
-            showSpinner(false);
-            sendBtn.disabled = false;
+            enableChat(true); // Re-enable input
+            userQuestionInput.focus();
         }
     });
 
-    function showSpinner(show) {
-        spinner.style.display = show ? 'flex' : 'none';
-    }
-
     function showStatus(message, type) {
         statusMessage.textContent = message;
-        statusMessage.style.color = type === 'error' ? 'red' : (type === 'success' ? 'green' : 'black');
+        statusMessage.style.color = type === 'error' ? '#721c24' : (type === 'success' ? '#155724' : 'black');
     }
     
     function enableChat(enabled) {
@@ -127,6 +143,32 @@ document.addEventListener('DOMContentLoaded', () => {
         
         messageDiv.appendChild(contentDiv);
         chatBox.appendChild(messageDiv);
-        chatBox.scrollTop = chatBox.scrollHeight; // Auto-scroll to the latest message
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function showThinkingIndicator() {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'message assistant';
+        
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'message-content';
+        contentDiv.innerHTML = `
+            <div class="thinking-indicator">
+                <div class="mini-spinner"></div>
+                <span>Thinking...</span>
+            </div>
+        `;
+        
+        messageDiv.appendChild(contentDiv);
+        chatBox.appendChild(messageDiv);
+        chatBox.scrollTop = chatBox.scrollHeight;
+        return messageDiv;
+    }
+
+    function updateThinkingIndicator(indicatorElement, newContent, newRole) {
+        indicatorElement.className = `message ${newRole}`;
+        const contentDiv = indicatorElement.querySelector('.message-content');
+        contentDiv.innerHTML = ''; // Clear the spinner
+        contentDiv.textContent = newContent;
     }
 });
