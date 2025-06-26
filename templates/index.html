@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat with PDFs using Gemini</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <div class="sidebar">
+            <h2>Menu</h2>
+            <p>Upload your PDF files and start chatting.</p>
+            <form id="upload-form">
+                <input type="file" id="pdf-files" name="pdf_docs" multiple accept=".pdf" required>
+                <label for="pdf-files" class="custom-file-upload">
+                    Choose Files
+                </label>
+                <div id="file-name-display">No files selected</div>
+                <button type="submit" id="process-btn">Process</button>
+            </form>
+            <div id="status-message"></div>
+        </div>
+
+        <div class="chat-container">
+            <header class="chat-header">
+                <h1>Chat with your PDFs 💬</h1>
+                <p>Powered by Gemini</p>
+            </header>
+            <div id="chat-box" class="chat-box">
+                <div class="message assistant">
+                    <div class="message-content">
+                        Hello! Please upload your PDF documents using the menu on the left and click 'Process' to begin.
+                    </div>
+                </div>
+            </div>
+            <div class="chat-input-area">
+                <form id="chat-form">
+                    <input type="text" id="user-question" placeholder="Ask a question about your documents..." disabled>
+                    <button type="submit" id="send-btn" disabled>Send</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="spinner" class="spinner-overlay" style="display: none;">
+        <div class="spinner"></div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
