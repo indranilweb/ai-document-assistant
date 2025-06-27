@@ -25,12 +25,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (pdfFilesInput.files.length > 0) {
             const fileNames = Array.from(pdfFilesInput.files).map(f => f.name).join(', ');
             fileNameDisplay.textContent = fileNames;
-            fileNameDisplay.classList.add('bg-indigo-100', 'text-indigo-500');
+            fileNameDisplay.classList.add('bg-indigo-100', 'text-indigo-500', 'outline', 'outline-1', 'outline-indigo-200');
             fileNameDisplay.classList.remove('text-gray-500');
         } else {
             fileNameDisplay.textContent = 'No files selected';
             fileNameDisplay.classList.add('text-gray-500');
-            fileNameDisplay.classList.remove('bg-indigo-100', 'text-indigo-500');
+            fileNameDisplay.classList.remove('bg-indigo-100', 'text-indigo-500', 'outline', 'outline-1', 'outline-indigo-200');
         }
     });
 
