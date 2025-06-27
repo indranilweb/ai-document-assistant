@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const converter = new showdown.Converter();
 
     // Set initial greeting message
-    appendMessage("Hello! Please upload your PDF documents using the menu on the left and click 'Process' to begin.", 'assistant');
+    appendMessage("Hello! Please upload your documents using the menu on the left and click 'Process' to begin.", 'assistant');
 
     // Update file name display on file selection
     pdfFilesInput.addEventListener('change', () => {
