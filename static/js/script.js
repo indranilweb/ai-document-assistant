@@ -152,7 +152,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (role === 'user') {
             messageWrapper.classList.add('justify-end');
-            contentClasses += ' bg-blue-600 text-white rounded-br';
+            contentClasses += ' bg-indigo-600 text-white rounded-br';
             contentDiv.textContent = content; // User content is plain text
         } else { // Assistant or error
             messageWrapper.classList.add('justify-start');

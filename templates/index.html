@@ -7,7 +7,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined">
     
     <script src="https://cdn.jsdelivr.net/npm/showdown@2.1.0/dist/showdown.min.js"></script>
     <style>
@@ -16,40 +18,45 @@
     </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center h-screen">
-    <div class="app-container flex w-[90vw] h-[90vh] max-w-7xl shadow-2xl rounded-xl overflow-hidden bg-white">
-        <div class="sidebar w-[30%] max-w-sm p-8 border-r border-gray-200 flex flex-col space-y-4">
-            <h2 class="text-2xl font-bold text-blue-600 mt-0">Menu</h2>
+    <div class="app-container flex w-full h-full overflow-hidden bg-white">
+        <div class="sidebar w-72 p-8 flex flex-col space-y-4">
+            <h2 class="text-2xl font-bold text-slate-600 mt-0">DocuAssist <i class="material-icons text-indigo-600">textsms</i></h2>
             <p class="text-gray-600">Upload your PDF files and start chatting.</p>
             <form id="upload-form">
                 <input type="file" id="pdf-files" name="pdf_docs" multiple accept=".pdf" required class="hidden">
-                <label for="pdf-files" class="custom-file-upload border border-blue-600 text-blue-600 bg-white py-2 px-4 rounded-md cursor-pointer text-center block transition-all hover:bg-blue-600 hover:text-white">
+                <label for="pdf-files" class="custom-file-upload border border-indigo-600 text-indigo-600 bg-white py-2 px-4 rounded-md cursor-pointer text-center block transition-all hover:bg-indigo-600 hover:text-white">
                     Choose Files
                 </label>
-                <div id="file-name-display" class="text-sm text-gray-500 break-words h-10">No files selected</div>
-                <button type="submit" id="process-btn" class="w-full py-3 bg-blue-600 text-white border-none rounded-md cursor-pointer text-base font-medium transition-colors hover:bg-blue-700">Process</button>
+                <div id="file-name-display" class="text-sm text-gray-500 break-words h-10 mt-2">No files selected</div>
+                <button type="submit" id="process-btn" class="w-full py-3 bg-indigo-600 text-white border-none rounded-md cursor-pointer text-base font-medium transition-colors hover:bg-indigo-700">Process</button>
             </form>
             
             <div id="progress-container" class="progress-container w-full mt-4" style="display: none;">
                 <div id="progress-label" class="progress-label text-sm text-gray-600 mb-2">Processing...</div>
                 <div class="progress-bar w-full bg-gray-200 rounded-full h-2.5">
-                    <div id="progress-bar-inner" class="progress-bar-inner bg-blue-600 h-2.5 rounded-full transition-all duration-500 ease-in-out"></div>
+                    <div id="progress-bar-inner" class="progress-bar-inner bg-indigo-600 h-2.5 rounded-full transition-all duration-500 ease-in-out"></div>
                 </div>
             </div>
 
             <div id="status-message" class="mt-4 font-medium h-5"></div>
         </div>
 
-        <div class="chat-container flex-grow flex flex-col bg-white">
-            <header class="chat-header py-4 px-8 border-b border-gray-200 bg-white">
+        <div class="chat-container flex-grow flex flex-col justify-end m-2 border border-gray-200 rounded-lg bg-white">
+            <!-- <header class="chat-header py-4 px-8 bg-white">
                 <h1 class="m-0 text-xl font-semibold">Chat with your PDFs 💬</h1>
                 <p class="m-0 text-sm text-gray-500">Powered by Gemini</p>
-            </header>
-            <div id="chat-box" class="chat-box flex-grow p-8 overflow-y-auto flex flex-col gap-4">
+            </header> -->
+            <div id="chat-box" class="chat-box p-8 overflow-y-auto flex flex-col gap-4">
+                <div class="chat-header py-4 px-8 bg-white">
+                    <h1 class="m-0 text-3xl text-slate-400 font-semibold">Chat with your Documents</h1>
+                    <p class="m-0 text-sm text-gray-500">Supports .PDF, .DOC, .DOCX, .TXT</p>
                 </div>
-            <div class="chat-input-area p-4 px-8 border-t border-gray-200 bg-white">
+                <!-- Dynamic chat questions and answers will append here -->
+            </div>
+            <div class="chat-input-area p-8 m-12 mt-8 rounded-lg shadow-xl shadow-slate-200 border border-slate-200 bg-white">
                 <form id="chat-form" class="flex gap-3">
-                    <input type="text" id="user-question" class="flex-grow py-3 px-4 border border-gray-300 rounded-md text-base focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-gray-100 disabled:cursor-not-allowed" placeholder="Ask a question about your documents..." disabled>
-                    <button type="submit" id="send-btn" class="py-2 px-5 bg-blue-600 text-white border-none rounded-md cursor-pointer text-base transition-colors hover:enabled:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed" disabled>Send</button>
+                    <input type="text" id="user-question" class="flex-grow py-3 px-4 border border-gray-300 rounded-md text-base focus:ring-2 focus:ring-indigo-500 focus:outline-none disabled:bg-gray-100 disabled:cursor-not-allowed" placeholder="Ask a question about your documents..." disabled>
+                    <button type="submit" id="send-btn" class="py-2 px-5 bg-indigo-600 text-white border-none rounded-md cursor-pointer text-base transition-colors hover:enabled:bg-indigo-700 disabled:bg-indigo-400 disabled:cursor-not-allowed" disabled>Send</button>
                 </form>
             </div>
         </div>
