@@ -14,12 +14,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let sessionId = null;
 
-    // Initialize Showdown converter
+    // Initialize Showdown converter for Markdown
     const converter = new showdown.Converter();
 
-    // Set initial greeting message using the appendMessage function
+    // Set initial greeting message
     appendMessage("Hello! Please upload your PDF documents using the menu on the left and click 'Process' to begin.", 'assistant');
-
 
     // Update file name display on file selection
     pdfFilesInput.addEventListener('change', () => {
@@ -31,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Handle PDF processing with simulated progress bar
+    // Handle PDF processing
     uploadForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         
@@ -51,6 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
         progressBarInner.style.width = '0%';
         progressLabel.textContent = 'Uploading and processing...';
         
+        // Simulate progress
         let progress = 0;
         const interval = setInterval(() => {
             progress += Math.random() * 10;
@@ -85,7 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Handle sending a chat message with "Thinking" indicator
+    // Handle sending a chat message
     chatForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         
@@ -116,7 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error(data.error || 'Failed to get a response.');
             }
         } catch (error) {
-            updateThinkingIndicator(thinkingIndicator, `Sorry, an error occurred: ${error.message}`, 'assistant error');
+            updateThinkingIndicator(thinkingIndicator, `Sorry, an error occurred: ${error.message}`, 'error');
         } finally {
             enableChat(true);
             userQuestionInput.focus();
@@ -125,7 +125,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function showStatus(message, type) {
         statusMessage.textContent = message;
-        statusMessage.style.color = type === 'error' ? '#721c24' : (type === 'success' ? '#155724' : 'black');
+        // Reset classes and add new ones based on type
+        statusMessage.className = 'mt-4 font-medium h-5';
+        if (type === 'error') {
+            statusMessage.classList.add('text-red-700');
+        } else if (type === 'success') {
+            statusMessage.classList.add('text-green-700');
+        } else {
+            statusMessage.classList.add('text-gray-800');
+        }
     }
     
     function enableChat(enabled) {
@@ -134,48 +142,66 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function appendMessage(content, role) {
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `message ${role}`;
-        
+        const messageWrapper = document.createElement('div');
+        // Base message styles
+        messageWrapper.className = 'flex w-full';
+
         const contentDiv = document.createElement('div');
-        contentDiv.className = 'message-content';
+        // Base content styles
+        let contentClasses = 'p-3 rounded-2xl max-w-[75%] prose';
         
-        // Use the converter for assistant messages, otherwise set text content for user messages
-        if (role === 'assistant') {
-            contentDiv.innerHTML = converter.makeHtml(content);
-        } else {
-            contentDiv.textContent = content;
+        if (role === 'user') {
+            messageWrapper.classList.add('justify-end');
+            contentClasses += ' bg-blue-600 text-white rounded-br';
+            contentDiv.textContent = content; // User content is plain text
+        } else { // Assistant or error
+            messageWrapper.classList.add('justify-start');
+            contentClasses += ' bg-gray-200 text-gray-800 rounded-bl';
+            contentDiv.innerHTML = converter.makeHtml(content); // Assistant content is markdown
         }
         
-        messageDiv.appendChild(contentDiv);
-        chatBox.appendChild(messageDiv);
+        contentDiv.className = contentClasses;
+        messageWrapper.appendChild(contentDiv);
+        chatBox.appendChild(messageWrapper);
         chatBox.scrollTop = chatBox.scrollHeight;
     }
 
     function showThinkingIndicator() {
-        const messageDiv = document.createElement('div');
-        messageDiv.className = 'message assistant';
-        
+        const messageWrapper = document.createElement('div');
+        messageWrapper.className = 'flex justify-start w-full'; // Wrapper for alignment
+        messageWrapper.id = 'thinking-indicator'; // Assign an ID to find it later
+
         const contentDiv = document.createElement('div');
-        contentDiv.className = 'message-content';
+        contentDiv.className = 'p-3 rounded-2xl rounded-bl bg-gray-200 text-gray-800';
+        
         contentDiv.innerHTML = `
-            <div class="thinking-indicator">
-                <div class="mini-spinner"></div>
-                <span>Thinking...</span>
+            <div class="flex items-center gap-2 italic">
+                <!-- <div class="w-5 h-5 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div> -->
+                <span>Thinking</span>
+                <div class="flex gap-1">
+                    <div class="w-1.5 h-1.5 bg-gray-600 rounded-full animate-bounce" style="animation-delay: 0ms;"></div>
+                    <div class="w-1.5 h-1.5 bg-gray-600 rounded-full animate-bounce" style="animation-delay: 150ms;"></div>
+                    <div class="w-1.5 h-1.5 bg-gray-600 rounded-full animate-bounce" style="animation-delay: 300ms;"></div>
+                </div>
             </div>
         `;
         
-        messageDiv.appendChild(contentDiv);
-        chatBox.appendChild(messageDiv);
+        messageWrapper.appendChild(contentDiv);
+        chatBox.appendChild(messageWrapper);
         chatBox.scrollTop = chatBox.scrollHeight;
-        return messageDiv;
+        return messageWrapper; // Return the wrapper element
     }
 
     function updateThinkingIndicator(indicatorElement, newContent, newRole) {
-        indicatorElement.className = `message ${newRole}`;
-        const contentDiv = indicatorElement.querySelector('.message-content');
-        
-        // Convert the new content from Markdown to HTML before inserting
+        let contentClasses = 'p-3 rounded-2xl rounded-bl max-w-[75%] prose';
+        if (newRole.includes('error')) {
+            contentClasses += ' bg-red-100 text-red-700';
+        } else {
+            contentClasses += ' bg-gray-200 text-gray-800';
+        }
+
+        const contentDiv = indicatorElement.querySelector('div'); // Get the first div inside the wrapper
+        contentDiv.className = contentClasses;
         contentDiv.innerHTML = converter.makeHtml(newContent);
     }
 });
