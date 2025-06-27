@@ -25,8 +25,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (pdfFilesInput.files.length > 0) {
             const fileNames = Array.from(pdfFilesInput.files).map(f => f.name).join(', ');
             fileNameDisplay.textContent = fileNames;
+            fileNameDisplay.classList.add('bg-indigo-100', 'text-indigo-500');
+            fileNameDisplay.classList.remove('text-gray-500');
         } else {
             fileNameDisplay.textContent = 'No files selected';
+            fileNameDisplay.classList.add('text-gray-500');
+            fileNameDisplay.classList.remove('bg-indigo-100', 'text-indigo-500');
         }
     });
 
@@ -71,7 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 sessionId = data.session_id;
                 progressBarInner.style.width = '100%';
                 progressLabel.textContent = 'Processing Complete!';
-                showStatus('You can now ask questions below.', 'success');
+                showStatus('You can now ask questions.', 'success');
                 enableChat(true);
                 setTimeout(() => { progressContainer.style.display = 'none'; }, 2000);
             } else {
@@ -126,11 +130,11 @@ document.addEventListener('DOMContentLoaded', () => {
     function showStatus(message, type) {
         statusMessage.textContent = message;
         // Reset classes and add new ones based on type
-        statusMessage.className = 'mt-4 font-medium h-5';
+        statusMessage.className = 'mt-4 font-medium h-6';
         if (type === 'error') {
             statusMessage.classList.add('text-red-700');
         } else if (type === 'success') {
-            statusMessage.classList.add('text-green-700');
+            statusMessage.classList.add('text-indigo-700');
         } else {
             statusMessage.classList.add('text-gray-800');
         }
