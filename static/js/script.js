@@ -182,10 +182,11 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="flex items-center gap-2 italic">
                 <!-- <div class="w-5 h-5 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div> -->
                 <span>Thinking</span>
+                <!-- <div class="w-3 h-3 bg-indigo-500 rounded-full animate-ping"></div> -->
                 <div class="flex gap-1">
-                    <div class="w-1.5 h-1.5 bg-gray-600 rounded-full animate-bounce" style="animation-delay: 0ms;"></div>
-                    <div class="w-1.5 h-1.5 bg-gray-600 rounded-full animate-bounce" style="animation-delay: 150ms;"></div>
-                    <div class="w-1.5 h-1.5 bg-gray-600 rounded-full animate-bounce" style="animation-delay: 300ms;"></div>
+                    <div class="w-1 h-1 bg-indigo-500 rounded-full animate-bounce" style="animation-delay: 0ms;"></div>
+                    <div class="w-1 h-1 bg-indigo-500 rounded-full animate-bounce" style="animation-delay: 150ms;"></div>
+                    <div class="w-1 h-1 bg-indigo-500 rounded-full animate-bounce" style="animation-delay: 300ms;"></div>
                 </div>
             </div>
         `;
