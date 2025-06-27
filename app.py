@@ -87,6 +87,8 @@ def process_pdfs():
         session_id = str(uuid.uuid4())
         vector_stores[session_id] = vector_store
         conversations[session_id] = get_conversational_chain(vector_store)
+        print(f"\nconversations: {conversations}\n")  # Debugging line
+        print(f"\nvector_stores: {vector_stores}\n")  # Debugging line
         return jsonify({
             "message": "PDFs processed successfully.",
             "session_id": session_id

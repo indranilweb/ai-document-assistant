@@ -26,10 +26,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const fileNames = Array.from(pdfFilesInput.files).map(f => f.name).join(', ');
             fileNameDisplay.textContent = fileNames;
             fileNameDisplay.classList.add('bg-indigo-100', 'text-indigo-500', 'outline', 'outline-1', 'outline-indigo-200');
-            fileNameDisplay.classList.remove('text-gray-500');
+            fileNameDisplay.classList.remove('text-slate-500');
         } else {
             fileNameDisplay.textContent = 'No files selected';
-            fileNameDisplay.classList.add('text-gray-500');
+            fileNameDisplay.classList.add('text-slate-500');
             fileNameDisplay.classList.remove('bg-indigo-100', 'text-indigo-500', 'outline', 'outline-1', 'outline-indigo-200');
         }
     });
@@ -136,7 +136,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (type === 'success') {
             statusMessage.classList.add('text-indigo-700');
         } else {
-            statusMessage.classList.add('text-gray-800');
+            statusMessage.classList.add('text-slate-800');
         }
     }
     
@@ -160,7 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
             contentDiv.textContent = content; // User content is plain text
         } else { // Assistant or error
             messageWrapper.classList.add('justify-start');
-            contentClasses += ' bg-gray-200 text-gray-800 rounded-bl';
+            contentClasses += ' bg-slate-200 text-slate-800 rounded-bl';
             contentDiv.innerHTML = converter.makeHtml(content); // Assistant content is markdown
         }
         
@@ -176,11 +176,11 @@ document.addEventListener('DOMContentLoaded', () => {
         messageWrapper.id = 'thinking-indicator'; // Assign an ID to find it later
 
         const contentDiv = document.createElement('div');
-        contentDiv.className = 'p-3 rounded-2xl rounded-bl bg-gray-200 text-gray-800';
+        contentDiv.className = 'p-3 rounded-2xl rounded-bl bg-slate-200 text-slate-800';
         
         contentDiv.innerHTML = `
             <div class="flex items-center gap-2 italic">
-                <!-- <div class="w-5 h-5 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div> -->
+                <!-- <div class="w-5 h-5 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin"></div> -->
                 <span>Thinking</span>
                 <!-- <div class="w-3 h-3 bg-indigo-500 rounded-full animate-ping"></div> -->
                 <div class="flex gap-1">
@@ -202,7 +202,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (newRole.includes('error')) {
             contentClasses += ' bg-red-100 text-red-700';
         } else {
-            contentClasses += ' bg-gray-200 text-gray-800';
+            contentClasses += ' bg-slate-200 text-slate-800';
         }
 
         const contentDiv = indicatorElement.querySelector('div'); // Get the first div inside the wrapper
