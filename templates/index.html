@@ -9,55 +9,60 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap">
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined">
     
     <script src="https://cdn.jsdelivr.net/npm/showdown@2.1.0/dist/showdown.min.js"></script>
     <style>
-        /* Add font-family to body if Tailwind's default sans is not roboto */
         body { font-family: 'Roboto', sans-serif; }
+        /* Simple scrollbar styling */
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
 <body class="bg-slate-100 flex items-center justify-center h-screen">
     <div class="app-container flex w-full h-full overflow-hidden bg-slate-100">
-        <div class="sidebar w-72  min-w-72 p-8 flex flex-col space-y-4">
-            <h2 class="text-2xl font-bold text-slate-600 mt-0">DocuAssist 
-                <i class="material-icons text-3xl text-transparent bg-gradient-to-br from-sky-500 via-indigo-500 to-pink-500 bg-clip-text">textsms</i>
-            </h2>
-            <p class="text-sm text-slate-600">Upload your PDF files and start chatting.</p>
-            <form id="upload-form">
-                <input type="file" id="pdf-files" name="pdf_docs" multiple accept=".pdf" required class="hidden">
-                <label for="pdf-files" class="custom-file-upload flex items-center justify-center border text-base font-medium border-indigo-600 text-indigo-600 bg-white py-2 rounded-md cursor-pointer text-center transition-all hover:bg-indigo-600 hover:text-white">
-                    <span class="material-icons mr-0.5 -ml-2">attach_file</span>
-                    Choose Files
-                </label>
-                <div id="file-name-display" class="text-sm break-words rounded mt-3 mb-8 px-2 py-1.5 font-semibold text-slate-500">No files selected</div>
-                <button type="submit" id="process-btn" class="flex items-center justify-center w-full py-2.5 bg-indigo-600 text-white border-none rounded-md cursor-pointer text-base font-medium transition-colors hover:bg-indigo-700">
-                    <span class="material-icons mr-1.5 -ml-2">memory</span>
-                    Process
-                </button>
-            </form>
+        <!-- Sidebar -->
+        <div class="sidebar w-72 min-w-72 p-6 flex flex-col">
+            <div class="flex-shrink-0">
+                <h2 class="text-2xl font-bold text-slate-600 mt-0">DocuAssist 
+                    <i class="material-icons text-3xl text-transparent bg-gradient-to-br from-sky-500 via-indigo-500 to-pink-500 bg-clip-text">textsms</i>
+                </h2>
+                <p class="text-sm text-slate-600 mb-4">Upload your PDF files and start chatting.</p>
+                <form id="upload-form">
+                    <input type="file" id="pdf-files" name="pdf_docs" multiple accept=".pdf" required class="hidden">
+                    <label for="pdf-files" class="custom-file-upload flex items-center justify-center border text-base font-medium border-indigo-600 text-indigo-600 bg-white py-2 rounded-md cursor-pointer text-center transition-all hover:bg-indigo-600 hover:text-white">
+                        <span class="material-icons mr-0.5 -ml-2">attach_file</span>
+                        Choose Files
+                    </label>
+                    <div id="file-name-display" class="text-sm break-words rounded mt-3 mb-4 px-2 py-1.5 font-semibold text-slate-500">No files selected</div>
+                    <button type="submit" id="process-btn" class="flex items-center justify-center w-full py-2.5 bg-indigo-600 text-white border-none rounded-md cursor-pointer text-base font-medium transition-colors hover:bg-indigo-700">
+                        <span class="material-icons mr-1.5 -ml-2">memory</span>
+                        Process
+                    </button>
+                </form>
+                <div id="progress-container" class="w-full mt-4" style="display: none;">
+                    <div id="progress-label" class="text-sm text-slate-600 mb-2">Processing...</div>
+                    <div class="w-full bg-slate-200 rounded-full h-2.5">
+                        <div id="progress-bar-inner" class="bg-indigo-600 h-2.5 rounded-full transition-all duration-500 ease-in-out"></div>
+                    </div>
+                </div>
+                <div id="status-message" class="mt-4 font-medium h-5"></div>
+            </div>
             
-            <div id="progress-container" class="progress-container w-full mt-4" style="display: none;">
-                <div id="progress-label" class="progress-label text-sm text-slate-600 mb-2">Processing...</div>
-                <div class="progress-bar w-full bg-slate-200 rounded-full h-2.5">
-                    <div id="progress-bar-inner" class="progress-bar-inner bg-indigo-600 h-2.5 rounded-full transition-all duration-500 ease-in-out"></div>
+            <!-- Sessions History Section -->
+            <div class="border-t border-slate-200 mt-6 pt-4 flex-grow flex flex-col min-h-0">
+                <h3 class="text-lg font-semibold text-slate-600 mb-2">Chat History</h3>
+                <div id="sessions-list" class="flex-grow overflow-y-auto custom-scrollbar space-y-2 pr-2">
+                    <!-- Session items will be dynamically added here -->
                 </div>
             </div>
-
-            <div id="status-message" class="mt-4 font-medium h-5"></div>
         </div>
 
+        <!-- Main Chat Area -->
         <div class="chat-container flex-grow flex flex-col justify-end m-3.5 border border-slate-200 rounded-lg bg-white">
-            <!-- <header class="chat-header py-4 px-8 bg-white">
-                <h1 class="m-0 text-xl font-semibold">Chat with your PDFs 💬</h1>
-                <p class="m-0 text-sm text-slate-500">Powered by Gemini</p>
-            </header> -->
-            <div id="chat-box" class="chat-box p-8 overflow-y-auto flex flex-col gap-4">
-                <div class="chat-header py-10 px-8 bg-white">
-                    <h1 class="m-0 mb-1.5 text-4xl text-slate-400 font-semibold">Chat with your Documents</h1>
-                    <p class="m-0 text-sm text-slate-500">Supports documents in .PDF, .DOC, .DOCX, .TXT format</p>
-                </div>
-                <!-- Dynamic chat questions and answers will append here -->
+            <div id="chat-box" class="chat-box p-8 overflow-y-auto flex flex-col gap-4 custom-scrollbar">
+                <!-- Dynamic chat content will appear here -->
             </div>
             <div class="chat-input-area p-8 m-12 mt-8 rounded-lg shadow-xl shadow-slate-200 border border-slate-200 bg-white">
                 <form id="chat-form" class="flex gap-3">
