@@ -18,6 +18,14 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        /* Ensure the delete icon is visible */
+        .session-item .delete-session-btn {
+            opacity: 0;
+            transition: opacity 0.2s ease-in-out;
+        }
+        .session-item:hover .delete-session-btn {
+            opacity: 1;
+        }
     </style>
 </head>
 <body class="bg-slate-100 flex items-center justify-center h-screen">
@@ -25,7 +33,7 @@
         <!-- Sidebar -->
         <div class="sidebar w-72 min-w-72 p-6 flex flex-col">
             <div class="flex-shrink-0">
-                <h2 class="text-2xl font-bold text-slate-600 mt-0">DocuAssist 
+                <h2 class="text-2xl font-bold text-slate-600 mt-0 mb-2">DocuAssist 
                     <i class="material-icons text-3xl text-transparent bg-gradient-to-br from-sky-500 via-indigo-500 to-pink-500 bg-clip-text">textsms</i>
                 </h2>
                 <p class="text-sm text-slate-600 mb-4">Upload your PDF files and start chatting.</p>
@@ -53,14 +61,14 @@
             <!-- Sessions History Section -->
             <div class="border-t border-slate-200 mt-6 pt-4 flex-grow flex flex-col min-h-0">
                 <h3 class="text-lg font-semibold text-slate-600 mb-2">Chat History</h3>
-                <div id="sessions-list" class="flex-grow overflow-y-auto custom-scrollbar space-y-2 pr-2">
+                <div id="sessions-list" class="flex-grow overflow-y-auto custom-scrollbar space-y-2">
                     <!-- Session items will be dynamically added here -->
                 </div>
             </div>
         </div>
 
         <!-- Main Chat Area -->
-        <div class="chat-container flex-grow flex flex-col justify-end m-3.5 border border-slate-200 rounded-lg bg-white">
+        <div class="chat-container flex-grow flex flex-col justify-end m-3.5 ml-0 border border-slate-200 rounded-lg bg-white">
             <div id="chat-box" class="chat-box p-8 overflow-y-auto flex flex-col gap-4 custom-scrollbar">
                 <!-- Dynamic chat content will appear here -->
             </div>
