@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Element References ---
     const uploadForm = document.getElementById('upload-form');
     const chatForm = document.getElementById('chat-form');
-    const pdfFilesInput = document.getElementById('pdf-files');
+    const docsFilesInput = document.getElementById('docs-input');
     const fileNameDisplay = document.getElementById('file-name-display');
     const userQuestionInput = document.getElementById('user-question');
     const chatBox = document.getElementById('chat-box');
@@ -24,8 +24,8 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchAllSessions(); 
 
     // --- Event Listeners ---
-    pdfFilesInput.addEventListener('change', () => {
-        const fileNames = Array.from(pdfFilesInput.files).map(f => f.name).join(', ');
+    docsFilesInput.addEventListener('change', () => {
+        const fileNames = Array.from(docsFilesInput.files).map(f => f.name).join(', ');
         fileNameDisplay.textContent = fileNames || 'No files selected';
         if (fileNames) {
             fileNameDisplay.classList.add('bg-indigo-100', 'text-indigo-500', 'outline', 'outline-1', 'outline-indigo-200');
@@ -38,8 +38,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     uploadForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        if (pdfFilesInput.files.length === 0) {
-            showStatus('Please select at least one PDF file.', 'error');
+        if (docsFilesInput.files.length === 0) {
+            showStatus('Please select at least one file.', 'error');
             return;
         }
         await processNewSession(new FormData(uploadForm));
@@ -135,10 +135,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 500);
 
         try {
-            const response = await fetch('/process_pdfs', { method: 'POST', body: formData });
+            const response = await fetch('/process_files', { method: 'POST', body: formData });
             clearInterval(interval);
             const data = await response.json();
-            if (!response.ok) throw new Error(data.error || 'Failed to process PDFs.');
+            if (!response.ok) throw new Error(data.error || 'Failed to process documents.');
             
             progressBarInner.style.width = '100%';
             progressLabel.textContent = 'Processing Complete!';

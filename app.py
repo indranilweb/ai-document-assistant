@@ -4,6 +4,7 @@ import shutil
 import json
 from flask import Flask, request, jsonify, render_template
 from pypdf import PdfReader
+import docx # pip install python-docx
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
 from langchain_community.vectorstores import FAISS
@@ -12,7 +13,7 @@ from langchain.memory import ConversationBufferMemory
 from dotenv import load_dotenv
 
 # --- Initialization and Configuration ---
-app = Flask(__name__, static_url_path='/static', static_folder='static') # Correct static folder config
+app = Flask(__name__, static_url_path='/static', static_folder='static')
 load_dotenv()
 api_key = os.getenv("GOOGLE_API_KEY")
 gemini_model = os.getenv("GEMINI_MODEL")
@@ -33,7 +34,6 @@ def repopulate_sessions_on_startup():
     print("Repopulating sessions from disk...")
     if not os.path.exists(VECTOR_STORE_DIR):
         return
-
     for session_id in os.listdir(VECTOR_STORE_DIR):
         session_path = os.path.join(VECTOR_STORE_DIR, session_id)
         if os.path.isdir(session_path):
@@ -45,7 +45,7 @@ def repopulate_sessions_on_startup():
                         sessions[session_id] = {
                             "chat_history": meta_data.get("chat_history", []),
                             "file_names": meta_data.get("file_names", ["Unknown Files"]),
-                            "conversation": None # Load on-demand
+                            "conversation": None
                         }
                         print(f"  - Loaded session: {session_id}")
                 except (json.JSONDecodeError, IOError) as e:
@@ -53,14 +53,31 @@ def repopulate_sessions_on_startup():
     print(f"Total sessions loaded: {len(sessions)}")
 
 # --- Core Logic Functions ---
-def get_pdf_text(pdf_files):
+def get_document_text(files):
+    """
+    Extracts text from a list of uploaded files (PDF, DOCX, TXT).
+    """
     text = ""
-    for pdf_file in pdf_files:
-        pdf_reader = PdfReader(pdf_file)
-        for page in pdf_reader.pages:
-            page_text = page.extract_text()
-            if page_text:
-                text += page_text
+    for file in files:
+        filename = file.filename
+        try:
+            if filename.endswith('.pdf'):
+                pdf_reader = PdfReader(file)
+                for page in pdf_reader.pages:
+                    page_text = page.extract_text()
+                    if page_text:
+                        text += page_text + "\n"
+            elif filename.endswith('.txt'):
+                text += file.read().decode('utf-8') + "\n"
+            elif filename.endswith('.docx'):
+                # Use python-docx to read the file stream directly
+                document = docx.Document(file)
+                for para in document.paragraphs:
+                    text += para.text + "\n"
+            else:
+                print(f"Skipping unsupported file: {filename}")
+        except Exception as e:
+            print(f"Error processing {filename}: {e}")
     return text
 
 def get_text_chunks(text):
@@ -111,18 +128,22 @@ def index():
     return render_template('index.html')
 
 # --- API Endpoints ---
-@app.route('/process_pdfs', methods=['POST'])
-def process_pdfs():
-    if 'pdf_docs' not in request.files:
-        return jsonify({"error": "No PDF files provided"}), 400
-    pdf_docs = request.files.getlist('pdf_docs')
-    if not pdf_docs or pdf_docs[0].filename == '':
+@app.route('/process_files', methods=['POST'])
+def process_files():
+    if 'docs' not in request.files:
+        return jsonify({"error": "No files provided"}), 400
+    uploaded_files = request.files.getlist('docs')
+    if not uploaded_files or uploaded_files[0].filename == '':
         return jsonify({"error": "No selected file"}), 400
 
     try:
         session_id = str(uuid.uuid4())
-        file_names = [file.filename for file in pdf_docs]
-        raw_text = get_pdf_text(pdf_docs)
+        file_names = [file.filename for file in uploaded_files]
+        raw_text = get_document_text(uploaded_files)
+
+        if not raw_text.strip():
+            return jsonify({"error": "Could not extract text from the provided documents."}), 400
+
         text_chunks = get_text_chunks(raw_text)
         get_vector_store(text_chunks, session_id)
 
@@ -133,9 +154,9 @@ def process_pdfs():
         with open(meta_file_path, 'w') as f:
             json.dump({"chat_history": session_data["chat_history"], "file_names": session_data["file_names"]}, f)
 
-        return jsonify({"message": "PDFs processed successfully.", "session_id": session_id, "file_names": file_names}), 200
+        return jsonify({"message": "Files processed successfully.", "session_id": session_id, "file_names": file_names}), 200
     except Exception as e:
-        app.logger.error(f"Error processing PDFs: {e}")
+        app.logger.error(f"Error processing files: {e}")
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
 
 @app.route('/chat', methods=['POST'])
@@ -190,32 +211,25 @@ def get_all_sessions():
     ]
     return jsonify(sorted(all_sessions_data, key=lambda x: x['session_id'], reverse=True)), 200
 
-# --- NEW: ENDPOINT TO DELETE A SESSION ---
 @app.route('/delete_session/<session_id>', methods=['DELETE'])
 def delete_session(session_id):
     """
     Deletes a session's data from memory and disk.
     """
     try:
-        # Remove from in-memory dictionary
         if session_id in sessions:
             sessions.pop(session_id)
             print(f"Deleted session {session_id} from memory.")
-
-        # Remove from disk
         session_path = os.path.join(VECTOR_STORE_DIR, session_id)
         if os.path.exists(session_path):
             shutil.rmtree(session_path)
             print(f"Deleted session directory: {session_path}")
-
         return jsonify({"message": "Session deleted successfully."}), 200
     except Exception as e:
         app.logger.error(f"Error deleting session {session_id}: {e}")
         return jsonify({"error": f"An error occurred during deletion: {str(e)}"}), 500
 
-
 # --- Main Execution ---
 if __name__ == '__main__':
     repopulate_sessions_on_startup()
-    # Note: The cleanup logic is removed to ensure persistence across restarts.
     app.run(host='0.0.0.0', port=5000, debug=True)

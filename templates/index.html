@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat with PDFs using Gemini</title>
+    <title>Chat with your Documents using Gemini</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,19 +13,12 @@
     <script src="https://cdn.jsdelivr.net/npm/showdown@2.1.0/dist/showdown.min.js"></script>
     <style>
         body { font-family: 'Roboto', sans-serif; }
-        /* Simple scrollbar styling */
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        /* Ensure the delete icon is visible */
-        .session-item .delete-session-btn {
-            opacity: 0;
-            transition: opacity 0.2s ease-in-out;
-        }
-        .session-item:hover .delete-session-btn {
-            opacity: 1;
-        }
+        .session-item .delete-session-btn { opacity: 0; transition: opacity 0.2s ease-in-out; }
+        .session-item:hover .delete-session-btn { opacity: 1; }
     </style>
 </head>
 <body class="bg-slate-100 flex items-center justify-center h-screen">
@@ -37,9 +30,9 @@
                     <i class="material-icons text-3xl text-transparent bg-gradient-to-br from-sky-500 via-indigo-500 to-pink-500 bg-clip-text">textsms</i>
                 </h2>
                 <p class="text-sm text-slate-600 mb-4">Upload your PDF files and start chatting.</p>
+                <p class="text-sm text-slate-600 mb-4">Upload your documents and start chatting.</p>
                 <form id="upload-form">
-                    <input type="file" id="pdf-files" name="pdf_docs" multiple accept=".pdf" required class="hidden">
-                    <label for="pdf-files" class="custom-file-upload flex items-center justify-center border text-base font-medium border-indigo-600 text-indigo-600 bg-white py-2 rounded-md cursor-pointer text-center transition-all hover:bg-indigo-600 hover:text-white">
+                    <label for="docs-input" class="custom-file-upload flex items-center justify-center border text-base font-medium border-indigo-600 text-indigo-600 bg-white py-2 rounded-md cursor-pointer text-center transition-all hover:bg-indigo-600 hover:text-white">
                         <span class="material-icons mr-0.5 -ml-2">attach_file</span>
                         Choose Files
                     </label>
