@@ -3,57 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat with your Documents using Gemini</title>
+    <title>DocuAssist - Chat with your Documents</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
     
     <script src="https://cdn.jsdelivr.net/npm/showdown@2.1.0/dist/showdown.min.js"></script>
     <style>
-        body { font-family: 'Roboto', sans-serif; }
+        body { font-family: 'Inter', sans-serif; }
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        .session-item .delete-session-btn { opacity: 0; transition: opacity 0.2s ease-in-out; }
-        .session-item:hover .delete-session-btn { opacity: 1; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #837edd; border-radius: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #605bcc; }
     </style>
 </head>
 <body class="bg-slate-100 flex items-center justify-center h-screen">
-    <div class="app-container flex w-full h-full overflow-hidden bg-slate-100">
+    <div class="app-container flex w-full h-full overflow-hidden bg-slate-900">
         <!-- Sidebar -->
-        <div class="sidebar w-72 min-w-72 p-6 flex flex-col">
+        <div class="sidebar w-80 min-w-80 p-6 flex flex-col">
             <div class="flex-shrink-0">
-                <h2 class="text-2xl font-bold text-slate-600 mt-0 mb-2">DocuAssist 
-                    <i class="material-icons text-3xl text-transparent bg-gradient-to-br from-sky-500 via-indigo-500 to-pink-500 bg-clip-text">textsms</i>
-                </h2>
-                <p class="text-sm text-slate-600 mb-4">Upload your documents and start chatting.</p>
-                <form id="upload-form">
-                    <input type="file" id="docs-input" name="docs" multiple accept=".pdf,.docx,.txt" required class="hidden">
-                    <label for="docs-input" class="custom-file-upload flex items-center justify-center border text-base font-medium border-indigo-600 text-indigo-600 bg-white py-2 rounded-md cursor-pointer text-center transition-all hover:bg-indigo-600 hover:text-white">
-                        <span class="material-icons mr-0.5 -ml-2">attach_file</span>
-                        Choose Files
-                    </label>
-                    <div id="file-name-display" class="text-sm break-words rounded mt-3 mb-4 px-2 py-1.5 font-semibold text-slate-500">No files selected</div>
-                    <button type="submit" id="process-btn" class="flex items-center justify-center w-full py-2.5 bg-indigo-600 text-white border-none rounded-md cursor-pointer text-base font-medium transition-colors hover:bg-indigo-700">
-                        <span class="material-icons mr-1.5 -ml-2">memory</span>
-                        Process
-                    </button>
-                </form>
-                <div id="progress-container" class="w-full mt-4" style="display: none;">
-                    <div id="progress-label" class="text-sm text-slate-600 mb-2">Processing...</div>
-                    <div class="w-full bg-slate-200 rounded-full h-2.5">
-                        <div id="progress-bar-inner" class="bg-indigo-600 h-2.5 rounded-full transition-all duration-500 ease-in-out"></div>
-                    </div>
+                <!-- Logo and Title -->
+                <div class="mb-8">
+                    <h2 class="text-2xl font-bold text-slate-50 mt-2 mb-4">DocuAssist 
+                        <i class="material-icons text-3xl text-transparent bg-gradient-to-br from-sky-500 via-indigo-500 to-pink-500 bg-clip-text">textsms</i>
+                    </h2>
+                    <p class="text-sm text-slate-300 mb-8">Transform your documents into intelligent conversations with AI-powered insights.</p>
                 </div>
-                <div id="status-message" class="mt-4 font-medium h-5"></div>
+                <!-- Upload Section -->
+                <div class="space-y-4">
+                    <form id="upload-form" class="space-y-4">
+                        <input type="file" id="docs-input" name="docs" multiple accept=".pdf,.docx,.txt" required class="hidden">
+                        <label for="docs-input" class="custom-file-upload group relative overflow-hidden flex items-center justify-center border-2 border-dashed border-slate-400 hover:border-blue-400 text-base font-medium py-3 px-6 rounded-xl cursor-pointer text-center transition-all duration-300 hover:bg-blue-400/10">
+                            <div class="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                            <span class="material-icons mr-2 text-slate-400 group-hover:text-blue-400 transition-colors">attach_file</span>
+                            <span class="text-slate-300 group-hover:text-white transition-colors">Choose Documents</span>
+                        </label>
+                        <div id="file-name-display" class="text-sm break-words rounded-lg p-3 bg-slate-800/50 text-slate-400 border border-slate-700">
+                            <div class="flex items-center gap-2">
+                                <span class="material-icons text-xs">description</span>
+                                <span>No files selected</span>
+                            </div>
+                        </div>
+                        <button type="submit" id="process-btn" class="flex items-center justify-center w-full py-3 px-6 bg-gradient-to-r from-blue-500 to-purple-600 text-white border-none rounded-xl cursor-pointer text-base font-medium hover:-translate-y-1 shadow-lg shadow-transparent hover:shadow-indigo-500/30 transition-all duration-300">
+                            <span class="material-icons mr-2">memory</span>
+                            Process Documents
+                        </button>
+                    </form>
+                    <div id="progress-container" class="w-full space-y-3" style="display: none;">
+                        <div id="progress-label" class="text-sm text-slate-300">Processing...</div>
+                        <div class="w-full bg-slate-700 rounded-full h-2.5 overflow-hidden">
+                            <div id="progress-bar-inner" class="bg-gradient-to-r from-blue-500 to-purple-600 h-2.5 rounded-full transition-all duration-500 ease-in-out"></div>
+                        </div>
+                    </div>
+                    <div id="status-message" class="text-sm font-medium h-5"></div>
+                </div>
             </div>
             
             <!-- Sessions History Section -->
-            <div class="border-t border-slate-200 mt-6 pt-4 flex-grow flex flex-col min-h-0">
-                <h3 class="text-lg font-semibold text-slate-600 mb-2">Chat History</h3>
+            <div class="border-t border-slate-600 mt-6 pt-4 flex-grow flex flex-col min-h-0">
+                <div class="flex items-center gap-2 mb-4">
+                    <span class="material-icons text-slate-400">history</span>
+                    <h3 class="text-lg font-semibold text-slate-50">Chat History</h3>
+                </div>
                 <div id="sessions-list" class="flex-grow overflow-y-auto custom-scrollbar space-y-2">
                     <!-- Session items will be dynamically added here -->
                 </div>
@@ -61,14 +74,19 @@
         </div>
 
         <!-- Main Chat Area -->
-        <div class="chat-container flex-grow flex flex-col justify-end m-3.5 ml-0 border border-slate-200 rounded-lg bg-white">
+        <div class="chat-container flex-grow flex flex-col justify-end m-3.5 ml-0 border border-slate-200 rounded-lg bg-slate-100">
             <div id="chat-box" class="chat-box p-8 overflow-y-auto flex flex-col gap-4 custom-scrollbar">
                 <!-- Dynamic chat content will appear here -->
             </div>
-            <div class="chat-input-area p-8 m-12 mt-8 rounded-lg shadow-xl shadow-slate-200 border border-slate-200 bg-white">
+            <div class="chat-input-area p-8 m-12 mt-8 rounded-2xl shadow-xl shadow-slate-300 border border-slate-200 bg-white">
                 <form id="chat-form" class="flex gap-3">
-                    <input type="text" id="user-question" class="flex-grow py-3 px-4 border border-slate-300 rounded-md text-base focus:ring-2 focus:ring-indigo-500 focus:outline-none disabled:bg-slate-100 disabled:cursor-not-allowed" placeholder="Ask a question about your documents..." disabled>
-                    <button type="submit" id="send-btn" class="flex items-center py-2 px-5 bg-indigo-600 text-white border-none rounded-md cursor-pointer text-base transition-colors hover:enabled:bg-indigo-700 disabled:bg-indigo-400 disabled:cursor-not-allowed" disabled>
+                    <div class="flex-grow relative">
+                        <input type="text" id="user-question" class="w-full py-4 px-6 pr-12 border border-slate-300 rounded-xl text-base focus:ring-1 focus:ring-indigo-500 focus:outline-none disabled:bg-slate-100 disabled:cursor-not-allowed" placeholder="Ask anything about your documents..." disabled>
+                        <div class="absolute right-4 mt-1 top-1/2 transform -translate-y-1/2">
+                            <span class="material-icons text-slate-400">chat</span>
+                        </div>
+                    </div>
+                    <button type="submit" id="send-btn" class="flex items-center justify-center w-14 h-14 bg-gradient-to-r from-blue-500 to-purple-600 text-white border-none rounded-xl cursor-pointer  hover:-translate-y-1 shadow-lg shadow-transparent hover:shadow-indigo-500/30 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
                         <i class="material-icons text-white">send</i>
                     </button>
                 </form>

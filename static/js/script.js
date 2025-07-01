@@ -25,14 +25,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Event Listeners ---
     docsFilesInput.addEventListener('change', () => {
-        const fileNames = Array.from(docsFilesInput.files).map(f => f.name).join(', ');
-        fileNameDisplay.textContent = fileNames || 'No files selected';
-        if (fileNames) {
-            fileNameDisplay.classList.add('bg-indigo-100', 'text-indigo-500', 'outline', 'outline-1', 'outline-indigo-200');
-            fileNameDisplay.classList.remove('text-slate-500');
+        const files = Array.from(docsFilesInput.files);
+        const fileNames = files.map(f => f.name).join(', ');
+        
+        if (files.length > 0) {
+            fileNameDisplay.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <span class="material-icons text-xs text-blue-400">description</span>
+                    <span class="text-white font-medium">${files.length} file${files.length > 1 ? 's' : ''} selected</span>
+                </div>
+                <div class="text-xs text-slate-300 mt-1 truncate">${fileNames}</div>
+            `;
+            fileNameDisplay.classList.add('bg-blue-500/20', 'border-blue-400/50');
+            fileNameDisplay.classList.remove('bg-slate-800/50', 'border-slate-700');
         } else {
-            fileNameDisplay.classList.remove('bg-indigo-100', 'text-indigo-500', 'outline', 'outline-1', 'outline-indigo-200');
-            fileNameDisplay.classList.add('text-slate-500');
+            fileNameDisplay.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <span class="material-icons text-xs">description</span>
+                    <span>No files selected</span>
+                </div>
+            `;
+            fileNameDisplay.classList.remove('bg-blue-500/20', 'border-blue-400/50');
+            fileNameDisplay.classList.add('bg-slate-800/50', 'border-slate-700');
         }
     });
 
@@ -217,7 +231,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (noHistoryMsg) noHistoryMsg.remove();
 
         const sessionItem = document.createElement('div');
-        sessionItem.className = 'session-item flex items-center justify-between cursor-pointer p-2.5 rounded-lg transition-colors hover:bg-slate-200';
+        sessionItem.className = 'session-item group flex items-center justify-between cursor-pointer p-2.5 rounded-xl transition-colors duration-200 hover:bg-slate-700/50';
         sessionItem.dataset.sessionId = sessionId;
 
         const firstFileName = fileNames[0] || 'Chat Session';
@@ -225,13 +239,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         sessionItem.innerHTML = `
             <div class="flex items-center gap-3 overflow-hidden">
-                <i class="material-icons text-slate-500">chat_bubble_outline</i>
+                <div class="w-8 h-8 rounded-lg bg-slate-600 flex items-center justify-center flex-shrink-0">
+                    <span class="material-icons text-slate-300 text-sm">description</span>
+                </div>
                 <div class="flex flex-col overflow-hidden">
-                    <span class="font-medium text-sm text-slate-700 truncate" title="${firstFileName}">${displayName}</span>
-                    <span class="text-xs text-slate-500">${fileNames.length} file(s)</span>
+                    <span class="font-medium text-sm text-slate-50 truncate" title="${firstFileName}">${displayName}</span>
+                    <span class="text-xs text-slate-400">${fileNames.length} document${fileNames.length > 1 ? 's' : ''}</span>
                 </div>
             </div>
-            <button class="delete-session-btn flex-shrink-0 w-8 h-8 flex justify-center items-center -mr-0.5 rounded-full hover:bg-slate-300 text-slate-500 hover:text-slate-600 transition-colors" title="Delete Session">
+            <button class="delete-session-btn flex-shrink-0 w-8 h-8 flex justify-center items-center rounded-lg opacity-0 group-hover:opacity-100 hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-all duration-200" title="Delete Session">
                 <i class="material-icons text-2xl leading-none">delete_outline</i>
             </button>
         `;
@@ -240,26 +256,42 @@ document.addEventListener('DOMContentLoaded', () => {
     
     function updateActiveSessionInList(sessionId) {
         document.querySelectorAll('.session-item').forEach(item => {
-            item.classList.toggle('bg-indigo-100', item.dataset.sessionId === sessionId);
-            item.classList.toggle('hover:bg-slate-200', item.dataset.sessionId !== sessionId);
+            if (item.dataset.sessionId === sessionId) {
+                item.classList.add('bg-blue-500/20', 'border', 'border-blue-400/30');
+                item.classList.remove('hover:bg-slate-700/50');
+            } else {
+                item.classList.remove('bg-blue-500/20', 'border', 'border-blue-400/30');
+                item.classList.add('hover:bg-slate-700/50');
+            }
         });
     }
 
     function clearChatBox() {
         chatBox.innerHTML = '';
         const welcomeHeader = document.createElement('div');
-        welcomeHeader.className = 'chat-header py-10 px-8 bg-white text-center';
+        welcomeHeader.className = 'chat-header flex-grow flex flex-col items-center justify-center text-center p-12';
         welcomeHeader.innerHTML = `
-            <h1 class="m-0 mb-1.5 text-4xl text-slate-400 font-semibold">Chat with your Documents</h1>
-            <p class="m-0 text-sm text-slate-500">Upload new documents or select a previous chat from the history.</p>
+            <i class="material-icons text-transparent text-6xl bg-gradient-to-br from-sky-400 via-indigo-400 to-pink-500 bg-clip-text">textsms</i><h1 class="text-4xl font-bold text-slate-500 mb-4 gradient-text">Chat with your Documents</h1>
+            <p class="text-slate-500 text-lg mb-8 max-w-md leading-relaxed">Upload new documents or select a previous conversation from your chat history to get started.</p>
+            <div class="flex gap-4 text-sm text-slate-500">
+                <div class="flex items-center gap-2">
+                    <span class="material-icons text-lg">description</span>
+                    <span>PDF, DOCX, TXT</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="material-icons text-lg">psychology</span>
+                    <span>AI-Powered</span>
+                </div>
+            </div>
         `;
         chatBox.appendChild(welcomeHeader);
     }
 
     function showStatus(message, type) {
         statusMessage.textContent = message;
-        statusMessage.className = 'mt-4 font-medium h-6 truncate';
-        const colorClass = type === 'error' ? 'text-red-700' : (type === 'success' ? 'text-indigo-700' : 'text-slate-800');
+        statusMessage.title = message;
+        statusMessage.className = 'text-sm font-medium h-5 truncate';
+        const colorClass = type === 'error' ? 'text-red-400' : (type === 'success' ? 'text-sky-400' : 'text-slate-300');
         statusMessage.classList.add(colorClass);
     }
     
