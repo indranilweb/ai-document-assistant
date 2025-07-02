@@ -80,10 +80,8 @@ document.addEventListener('DOMContentLoaded', () => {
             
             updateThinkingIndicator(thinkingIndicator, data.answer, 'assistant');
             
-            const sessionInList = sessionsList.querySelector(`[data-session-id="${activeSessionId}"]`);
-            if (!sessionInList) {
-                 fetchAllSessions(); 
-            }
+            // Re-fetch all sessions to ensure timestamp update is reflected and list is re-sorted
+            fetchAllSessions(); 
 
         } catch (error) {
             updateThinkingIndicator(thinkingIndicator, `Sorry, an error occurred: ${error.message}`, 'error');
@@ -103,9 +101,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (deleteBtn) {
             // Use a simple confirmation before deleting
-            if (confirm('Are you sure you want to delete this chat session?')) {
+            // Replaced alert/confirm with a custom modal for better UX
+            showCustomConfirm('Are you sure you want to delete this chat session?', () => {
                 deleteSession(sessionId);
-            }
+            });
         } else if (sessionId !== activeSessionId) {
             // If not deleting, and it's a new session, switch to it
             switchSession(sessionId);
@@ -125,9 +124,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (allSessions.length === 0) {
                 sessionsList.innerHTML = `<div class="text-center text-sm text-slate-500 p-4">No chat history found.</div>`;
             } else {
+                // Sessions are already sorted by timestamp from the backend
                 allSessions.forEach(session => {
-                    addSessionToList(session.session_id, session.file_names);
+                    addSessionToList(session.session_id, session.file_names, session.timestamp);
                 });
+            
+                // If there's an active session, highlight it
+                updateActiveSessionInList(activeSessionId);
             }
         } catch (error) {
             console.error('Error fetching sessions:', error);
@@ -176,14 +179,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
             activeSessionId = sessionId;
             clearChatBox();
-            data.chat_history.forEach(msg => appendMessageToChat(msg.content, msg.role));
             if (data.chat_history.length === 0) {
-                 appendMessageToChat(`Hello! I'm ready to answer questions about ${data.file_names.join(', ')}.`, 'assistant');
+                 appendMessageToChat(`Hello! I'm ready to answer questions about **${data.file_names.join('**, **').replaceAll('_', '\\_')}**.`, 'assistant');
+            } else {
+                appendMessageToChat(`Hello! Your questions about **${data.file_names.join('**, **').replaceAll('_', '\\_')}**.`, 'assistant');
             }
+            data.chat_history.forEach(msg => appendMessageToChat(msg.content, msg.role));
             
             enableChatInput(true);
             updateActiveSessionInList(sessionId);
-            showStatus(`Active session: ${data.file_names.join(', ').substring(0, 30)}...`, 'success');
+            showStatus(`Active session: ${data.file_names.join(', ')}`, 'success');
 
         } catch (error) {
             showStatus(`Error switching session: ${error.message}`, 'error');
@@ -226,16 +231,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- UI Helper Functions ---
 
-    function addSessionToList(sessionId, fileNames) {
+    function addSessionToList(sessionId, fileNames, timestamp) {
         const noHistoryMsg = sessionsList.querySelector('.text-center');
         if (noHistoryMsg) noHistoryMsg.remove();
 
         const sessionItem = document.createElement('div');
-        sessionItem.className = 'session-item group flex items-center justify-between cursor-pointer p-2.5 rounded-xl transition-colors duration-200 hover:bg-slate-700/50';
+        sessionItem.className = 'session-item group flex items-center justify-between cursor-pointer space-x-1 p-2.5 rounded-xl transition-colors duration-200 hover:bg-slate-700/50';
         sessionItem.dataset.sessionId = sessionId;
 
         const firstFileName = fileNames[0] || 'Chat Session';
         const displayName = firstFileName.length > 20 ? `${firstFileName.substring(0, 18)}...` : firstFileName;
+        const allFileNames = fileNames.join(', ') || 'Chat Session';
+
+        // Format timestamp for display
+        const date = new Date(timestamp * 1000); // Convert seconds to milliseconds
+        const formattedDate = date.toLocaleString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
 
         sessionItem.innerHTML = `
             <div class="flex items-center gap-3 overflow-hidden">
@@ -243,7 +259,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span class="material-icons text-slate-300 text-sm">description</span>
                 </div>
                 <div class="flex flex-col overflow-hidden">
-                    <span class="font-medium text-sm text-slate-50 truncate" title="${firstFileName}">${displayName}</span>
+                    <span class="font-medium text-sm text-slate-50 truncate" title="${allFileNames}">${allFileNames}</span>
                     <span class="text-xs text-slate-400">${fileNames.length} document${fileNames.length > 1 ? 's' : ''}</span>
                 </div>
             </div>
@@ -251,7 +267,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 <i class="material-icons text-2xl leading-none">delete_outline</i>
             </button>
         `;
-        sessionsList.prepend(sessionItem);
+        // Append to ensure newest is on top, as the backend already sorts
+        sessionsList.append(sessionItem);
     }
     
     function updateActiveSessionInList(sessionId) {
@@ -351,5 +368,37 @@ document.addEventListener('DOMContentLoaded', () => {
         let contentClasses = 'p-3 rounded-2xl max-w-[75%] prose rounded-bl-sm';
         contentClasses += newRole.includes('error') ? ' bg-red-100 text-red-700' : ' bg-slate-200 text-slate-800';
         indicatorElement.innerHTML = `<div class="${contentClasses}">${converter.makeHtml(newContent)}</div>`;
+    }
+
+    // --- Custom Confirmation Modal (replaces alert/confirm) ---
+    function showCustomConfirm(message, onConfirm) {
+        // Create modal overlay
+        const overlay = document.createElement('div');
+        overlay.id = 'custom-confirm-overlay';
+        overlay.className = 'fixed inset-0 backdrop-blur bg-slate-500/30 flex items-center justify-center z-50';
+
+        // Create modal content
+        const modal = document.createElement('div');
+        modal.className = 'bg-white p-6 rounded-lg shadow-xl max-w-sm w-full text-center';
+        modal.innerHTML = `
+            <p class="text-lg font-semibold mb-4">${message}</p>
+            <div class="flex justify-center gap-4">
+                <button id="confirm-yes" class="px-5 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors">Yes</button>
+                <button id="confirm-no" class="px-5 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 transition-colors">No</button>
+            </div>
+        `;
+
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+
+        // Add event listeners for buttons
+        document.getElementById('confirm-yes').addEventListener('click', () => {
+            onConfirm();
+            overlay.remove();
+        });
+
+        document.getElementById('confirm-no').addEventListener('click', () => {
+            overlay.remove();
+        });
     }
 });

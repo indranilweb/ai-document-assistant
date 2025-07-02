@@ -2,6 +2,7 @@ import os
 import uuid
 import shutil
 import json
+import time # Import the time module
 from flask import Flask, request, jsonify, render_template
 from pypdf import PdfReader
 import docx # pip install python-docx
@@ -31,6 +32,10 @@ genai.configure(api_key=api_key)
 
 # --- Session Repopulation Logic ---
 def repopulate_sessions_on_startup():
+    """
+    Repopulates session data from disk on application startup,
+    including file names, chat history, and the new timestamp.
+    """
     print("Repopulating sessions from disk...")
     if not os.path.exists(VECTOR_STORE_DIR):
         return
@@ -45,6 +50,7 @@ def repopulate_sessions_on_startup():
                         sessions[session_id] = {
                             "chat_history": meta_data.get("chat_history", []),
                             "file_names": meta_data.get("file_names", ["Unknown Files"]),
+                            "timestamp": meta_data.get("timestamp", time.time()), # Load timestamp, default to current if not found
                             "conversation": None
                         }
                         print(f"  - Loaded session: {session_id}")
@@ -61,6 +67,7 @@ def get_document_text(files):
     for file in files:
         filename = file.filename
         try:
+            text += f"--- {filename} ---\n"
             if filename.endswith('.pdf'):
                 pdf_reader = PdfReader(file)
                 for page in pdf_reader.pages:
@@ -70,7 +77,6 @@ def get_document_text(files):
             elif filename.endswith('.txt'):
                 text += file.read().decode('utf-8') + "\n"
             elif filename.endswith('.docx'):
-                # Use python-docx to read the file stream directly
                 document = docx.Document(file)
                 for para in document.paragraphs:
                     text += para.text + "\n"
@@ -81,16 +87,26 @@ def get_document_text(files):
     return text
 
 def get_text_chunks(text):
+    """
+    Splits the raw text into smaller chunks for vector storage.
+    """
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=10000, chunk_overlap=1000)
     return text_splitter.split_text(text)
 
 def get_vector_store(text_chunks, session_id):
+    """
+    Creates a FAISS vector store from text chunks and saves it locally.
+    """
     embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
     vector_store = FAISS.from_texts(text_chunks, embedding=embeddings)
     vector_store.save_local(os.path.join(VECTOR_STORE_DIR, session_id))
     return vector_store
 
 def get_conversational_chain(vector_store, chat_history):
+    """
+    Creates and returns a ConversationalRetrievalChain for the chat.
+    Initializes memory with existing chat history.
+    """
     llm = ChatGoogleGenerativeAI(model=gemini_model, temperature=0.3)
     memory = ConversationBufferMemory(memory_key='chat_history', return_messages=True, output_key='answer')
     for message in chat_history:
@@ -106,6 +122,9 @@ def get_conversational_chain(vector_store, chat_history):
     )
 
 def get_or_create_conversation(session_id):
+    """
+    Retrieves an existing conversation chain or creates a new one for a session.
+    """
     session_data = sessions.get(session_id)
     if not session_data:
         return None
@@ -125,11 +144,16 @@ def get_or_create_conversation(session_id):
 # --- Frontend Route ---
 @app.route('/')
 def index():
+    """Renders the main HTML page."""
     return render_template('index.html')
 
 # --- API Endpoints ---
 @app.route('/process_files', methods=['POST'])
 def process_files():
+    """
+    Handles file uploads, extracts text, creates a vector store,
+    and initializes a new chat session with a timestamp.
+    """
     if 'docs' not in request.files:
         return jsonify({"error": "No files provided"}), 400
     uploaded_files = request.files.getlist('docs')
@@ -147,20 +171,37 @@ def process_files():
         text_chunks = get_text_chunks(raw_text)
         get_vector_store(text_chunks, session_id)
 
-        session_data = {"chat_history": [], "file_names": file_names, "conversation": None}
+        # Initialize session data with current timestamp
+        current_timestamp = time.time()
+        session_data = {
+            "chat_history": [],
+            "file_names": file_names,
+            "timestamp": current_timestamp,
+            "conversation": None
+        }
         sessions[session_id] = session_data
 
+        # Save metadata including timestamp
         meta_file_path = os.path.join(VECTOR_STORE_DIR, session_id, "session_meta.json")
+        os.makedirs(os.path.dirname(meta_file_path), exist_ok=True) # Ensure directory exists
         with open(meta_file_path, 'w') as f:
-            json.dump({"chat_history": session_data["chat_history"], "file_names": session_data["file_names"]}, f)
+            json.dump({
+                "chat_history": session_data["chat_history"],
+                "file_names": session_data["file_names"],
+                "timestamp": session_data["timestamp"] # Save timestamp
+            }, f)
 
-        return jsonify({"message": "Files processed successfully.", "session_id": session_id, "file_names": file_names}), 200
+        return jsonify({"message": "Files processed successfully.", "session_id": session_id, "file_names": file_names, "timestamp": current_timestamp}), 200
     except Exception as e:
         app.logger.error(f"Error processing files: {e}")
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
 
 @app.route('/chat', methods=['POST'])
 def chat():
+    """
+    Handles chat interactions, updates chat history, and saves it
+    along with an updated timestamp to session metadata.
+    """
     data = request.get_json()
     session_id = data.get('session_id')
     user_question = data.get('user_question')
@@ -176,10 +217,17 @@ def chat():
         chat_history_messages = conversation.memory.chat_memory.messages
         formatted_history = [{"role": "user" if msg.type == "human" else "assistant", "content": msg.content} for msg in chat_history_messages]
 
+        # Update session data with new chat history and current timestamp
         sessions[session_id]["chat_history"] = formatted_history
+        sessions[session_id]["timestamp"] = time.time() # Update timestamp on chat activity
+
         meta_file_path = os.path.join(VECTOR_STORE_DIR, session_id, "session_meta.json")
         with open(meta_file_path, 'w') as f:
-            json.dump({"chat_history": formatted_history, "file_names": sessions[session_id]["file_names"]}, f)
+            json.dump({
+                "chat_history": formatted_history,
+                "file_names": sessions[session_id]["file_names"],
+                "timestamp": sessions[session_id]["timestamp"] # Save updated timestamp
+            }, f)
 
         return jsonify({"answer": response.get('answer', 'No answer found.'), "chat_history": formatted_history}), 200
     except Exception as e:
@@ -188,28 +236,37 @@ def chat():
 
 @app.route('/get_session/<session_id>', methods=['GET'])
 def get_session(session_id):
+    """
+    Retrieves a specific session's data, including its timestamp.
+    """
     session_data = sessions.get(session_id)
     if not session_data:
         return jsonify({"error": "Session not found"}), 404
     return jsonify({
         "session_id": session_id,
         "file_names": session_data.get("file_names", []),
-        "chat_history": session_data.get("chat_history", [])
+        "chat_history": session_data.get("chat_history", []),
+        "timestamp": session_data.get("timestamp", time.time()) # Include timestamp
     })
 
 @app.route('/get_all_sessions', methods=['GET'])
 def get_all_sessions():
     """
-    Returns metadata for all available sessions to populate the frontend list.
+    Returns metadata for all available sessions to populate the frontend list,
+    sorted by timestamp (newest first).
     """
-    all_sessions_data = [
-        {
+    all_sessions_data = []
+    for session_id, data in sessions.items():
+        all_sessions_data.append({
             "session_id": session_id,
             "file_names": data.get("file_names", ["Unknown Files"]),
-        }
-        for session_id, data in sessions.items()
-    ]
-    return jsonify(sorted(all_sessions_data, key=lambda x: x['session_id'], reverse=True)), 200
+            "timestamp": data.get("timestamp", 0) # Include timestamp, default to 0 for old sessions
+        })
+    
+    # Sort sessions by timestamp in descending order (newest first)
+    all_sessions_data.sort(key=lambda x: x['timestamp'], reverse=True)
+    
+    return jsonify(all_sessions_data), 200
 
 @app.route('/delete_session/<session_id>', methods=['DELETE'])
 def delete_session(session_id):
