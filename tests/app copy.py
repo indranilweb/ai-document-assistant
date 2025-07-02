@@ -66,7 +66,6 @@ def get_document_text(files):
     text = ""
     for file in files:
         filename = file.filename
-        file.seek(0) # Reset pointer before reading
         try:
             text += f"--- {filename} ---\n"
             if filename.endswith('.pdf'):
@@ -91,10 +90,10 @@ def get_text_chunks(text):
     """
     Splits the raw text into smaller chunks for vector storage.
     """
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=10000, chunk_overlap=2000)
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=10000, chunk_overlap=1000)
     return text_splitter.split_text(text)
 
-def get_vector_store(text_chunks, session_id):
+def get_vector_store1(text_chunks, session_id):
     """
     Creates a FAISS vector store from text chunks and saves it locally.
     """
@@ -102,6 +101,52 @@ def get_vector_store(text_chunks, session_id):
     vector_store = FAISS.from_texts(text_chunks, embedding=embeddings)
     vector_store.save_local(os.path.join(VECTOR_STORE_DIR, session_id))
     return vector_store
+
+# --- Modified get_vector_store function for real-time chunk embedding indication ---
+def get_vector_store(text_chunks, session_id):
+    """
+    Creates a FAISS vector store from text chunks and saves it locally.
+    Provides real-time indication of chunks being converted to embeddings.
+    """
+    embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
+    
+    # Initialize an empty FAISS index
+    # We will add documents incrementally
+    faiss_index = None
+
+    print(f"Starting to convert {len(text_chunks)} text chunks into embeddings...")
+
+    for i, chunk in enumerate(text_chunks):
+        # Embed the current chunk
+        # Note: embed_documents is typically for multiple documents, embed_query for a single string.
+        # For a single chunk, embed_query works, but if you want to be precise about "documents",
+        # you might put [chunk] and use embed_documents. For simplicity and seeing progress per chunk,
+        # we'll treat each chunk's embedding.
+        try:
+            # chunk_embedding = embeddings.embed_query(chunk) # This performs the actual embedding for the chunk
+            
+            # If this is the first chunk, create the FAISS index from it
+            if faiss_index is None:
+                # FAISS.from_texts requires a list of texts
+                faiss_index = FAISS.from_texts([chunk], embedding=embeddings)
+            else:
+                # For subsequent chunks, add them to the existing index
+                faiss_index.add_texts([chunk]) # add_texts also handles embedding internally
+            
+            print(f"  Processed chunk {i + 1}/{len(text_chunks)}: Successfully embedded a text chunk.")
+        except Exception as e:
+            print(f"  Error processing chunk {i + 1}/{len(text_chunks)}: {e}")
+            # Decide how to handle errors: skip, retry, or raise
+            continue # Skip to the next chunk if there's an error
+
+    if faiss_index:
+        faiss_index.save_local(os.path.join(VECTOR_STORE_DIR, session_id))
+        print(f"All chunks processed. FAISS vector store saved for session {session_id}.")
+    else:
+        print("No chunks were successfully processed to create a FAISS index.")
+        raise ValueError("Failed to create FAISS index from text chunks.")
+
+    return faiss_index
 
 def get_conversational_chain(vector_store, chat_history):
     """
