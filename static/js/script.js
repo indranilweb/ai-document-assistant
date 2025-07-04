@@ -332,7 +332,7 @@ document.addEventListener('DOMContentLoaded', () => {
             contentClasses += ' bg-indigo-600 text-white rounded-br-sm';
             contentDiv.textContent = content;
         } else {
-            contentClasses += ' bg-slate-200 text-slate-800 rounded-bl-sm';
+            contentClasses += ' bg-slate-200 text-slate-800 rounded-bl-sm break-words';
             if (role.includes('error')) contentClasses += ' bg-red-100 text-red-700';
             contentDiv.innerHTML = converter.makeHtml(content);
         }
@@ -365,7 +365,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateThinkingIndicator(indicatorElement, newContent, newRole) {
-        let contentClasses = 'p-3 rounded-2xl max-w-[75%] prose rounded-bl-sm';
+        let contentClasses = 'p-3 rounded-2xl max-w-[75%] prose rounded-bl-sm break-words';
         contentClasses += newRole.includes('error') ? ' bg-red-100 text-red-700' : ' bg-slate-200 text-slate-800';
         indicatorElement.innerHTML = `<div class="${contentClasses}">${converter.makeHtml(newContent)}</div>`;
     }
